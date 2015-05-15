@@ -34,3 +34,12 @@ You can run the following command to see if your messages will end up in Slack:
 ```bash
 node test.js
 ```
+
+## Creating Zip File For Lamda
+
+Once the app is working in the `Testing Slack` section, you can package up your
+app for uploading to Lambda with the following command:
+
+```bash
+npm run-script package
+```

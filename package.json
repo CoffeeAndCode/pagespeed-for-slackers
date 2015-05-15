@@ -11,6 +11,7 @@
   },
   "devDependencies": {},
   "scripts": {
+    "package": "zip -r lambda.zip . -x *.git*",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Coffee and Code",

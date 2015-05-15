@@ -62,9 +62,9 @@ exports.handler = function(event, context) {
         channel: config.slack.channel,
         attachments: [
           {
-            fallback: 'Google PageSpeed score (' + options.strategy + '): ' + data.score + "\nhttps://developers.google.com/speed/pagespeed/insights/?url=" + config.url,
+            fallback: 'Google PageSpeed score (' + options.strategy + '): ' + data.score + "\nhttps://developers.google.com/speed/pagespeed/insights/?url=" + config.url + '&tab=' + config.pagespeed.strategy,
             title: 'Google PageSpeed score (' + options.strategy + '): ' + data.score,
-            title_link: 'https://developers.google.com/speed/pagespeed/insights/?url=' + config.url,
+            title_link: 'https://developers.google.com/speed/pagespeed/insights/?url=' + config.url + '&tab=' + config.pagespeed.strategy,
             fields: pageStatFields(data.pageStats),
             color: colorForScore(data.score)
           }

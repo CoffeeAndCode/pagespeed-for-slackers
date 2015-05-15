@@ -11,6 +11,16 @@ function byteFormatter(value) {
   return prettyBytes(parseFloat(value));
 }
 
+function includesIndexKey(records) {
+  return _.any(records, function(record) {
+    if (record.hasOwnProperty('s3') &&
+      record.s3.hasOwnProperty('object') &&
+      record.s3.object.hasOwnProperty('key')) {
+      return record.s3.object.key === 'index.html';
+    }
+  });
+}
+
 function numberFormatter(value) {
   return value;
 }
@@ -49,43 +59,53 @@ function pageStatFields(data) {
 }
 
 exports.handler = function(event, context) {
-  var options = {
-    strategy: config.pagespeed.strategy,
-    threshold: config.pagespeed.warningScore
-  };
+  console.log('Lambda event data:');
+  console.log(JSON.stringify(event));
 
-  psi(config.url, options, function (error, data) {
-    if (error) {
-      context.fail(error);
-    } else {
-      var payload = {
-        channel: config.slack.channel,
-        attachments: [
-          {
-            fallback: 'Google PageSpeed score (' + options.strategy + '): ' + data.score + "\nhttps://developers.google.com/speed/pagespeed/insights/?url=" + config.url + '&tab=' + config.pagespeed.strategy,
-            title: 'Google PageSpeed score (' + options.strategy + '): ' + data.score,
-            title_link: 'https://developers.google.com/speed/pagespeed/insights/?url=' + config.url + '&tab=' + config.pagespeed.strategy,
-            fields: pageStatFields(data.pageStats),
-            color: colorForScore(data.score)
+  if (event.hasOwnProperty('Records') &&
+    event.Records.length > 0 &&
+    includesIndexKey(event.Records)) {
+
+    var options = {
+      strategy: config.pagespeed.strategy,
+      threshold: config.pagespeed.warningScore
+    };
+
+    psi(config.url, options, function (error, data) {
+      if (error) {
+        context.fail(error);
+      } else {
+        var payload = {
+          channel: config.slack.channel,
+          attachments: [
+            {
+              fallback: 'Google PageSpeed score (' + options.strategy + '): ' + data.score + "\nhttps://developers.google.com/speed/pagespeed/insights/?url=" + config.url + '&tab=' + config.pagespeed.strategy,
+              title: 'Google PageSpeed score (' + options.strategy + '): ' + data.score,
+              title_link: 'https://developers.google.com/speed/pagespeed/insights/?url=' + config.url + '&tab=' + config.pagespeed.strategy,
+              fields: pageStatFields(data.pageStats),
+              color: colorForScore(data.score)
+            }
+          ]
+        };
+
+        request({
+          url: config.slack.incomingWebHook,
+          method: 'POST',
+          json: true,
+          headers: {
+            'content-type': 'application/json'
+          },
+          body: payload
+        }, function(error, response, body) {
+          if (!error && response.statusCode === 200) {
+            context.succeed(body);
+          } else {
+            context.fail(JSON.stringify(response));
           }
-        ]
-      };
-
-      request({
-        url: config.slack.incomingWebHook,
-        method: 'POST',
-        json: true,
-        headers: {
-          'content-type': 'application/json'
-        },
-        body: payload
-      }, function(error, response, body) {
-        if (!error && response.statusCode === 200) {
-          context.succeed(body);
-        } else {
-          context.fail(JSON.stringify(response));
-        }
-      });
-    }
-  });
+        });
+      }
+    });
+  } else {
+    context.succeed('Did not include "index.html" key. Skipping.');
+  }
 };

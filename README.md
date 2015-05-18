@@ -43,3 +43,22 @@ app for uploading to Lambda with the following command:
 ```bash
 npm run-script package
 ```
+
+## Trigging the Lambda Function
+
+Originally, the intent was to watch S3 events and trigger the lambda function
+when the bucket content changes. However, the current limitation of not being able
+to filter viable events and throttling caused by too many events at the same time
+forced me to manually trigger the lambda function as an additional step of the build
+process.
+
+```bash
+aws lambda invoke --invocation-type RequestResponse \
+                  --function-name YourLambdaFunctionName \
+                  --region us-east-1 \
+                  --payload '{"Records": [{"s3": {"object": {"key": "index.html"}}}]}' \
+                  YourLambdaFunctionName-output.txt
+```
+
+The code is setup to respect an S3 event structure, but could be refactored to
+better handle multiple domains and only passing relevant information.

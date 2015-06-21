@@ -1,6 +1,6 @@
 # PageSpeed for Slackers
 
-This will run an AWS Lambda function to collection Google PageSpeed information
+This will run an AWS Lambda function to collect Google PageSpeed information
 about a provided url and send it to a Slack channel through an incoming
 webhook.
 
@@ -15,16 +15,13 @@ in the root of the project with the following values:
 {
   "pagespeed": {
     "goodScore": 80,       // minimum "good" score
-    "strategy": "mobile",  // can be "mobile" or "desktop",
     "warningScore": 60     // minimum "warning" score
   },
   "slack": {
     "channel": "#infrastructure",  // Slack room to post notifications to
     "incomingWebHook": "https://hooks.slack.com/services/xxxxxx/xxxxxx/xxxxxx"
-  },
-  "url": "www.example.com" // url of the site to test with PageSpeed
+  }
 }
-
 ```
 
 ## Testing Slack
@@ -56,9 +53,6 @@ process.
 aws lambda invoke --invocation-type RequestResponse \
                   --function-name YourLambdaFunctionName \
                   --region us-east-1 \
-                  --payload '{"Records": [{"s3": {"object": {"key": "index.html"}}}]}' \
+                  --payload '{"url": "http://example.com"}' \
                   YourLambdaFunctionName-output.txt
 ```
-
-The code is setup to respect an S3 event structure, but could be refactored to
-better handle multiple domains and only passing relevant information.

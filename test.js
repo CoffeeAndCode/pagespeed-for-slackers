@@ -10,4 +10,4 @@ var mock = {
   }
 };
 
-test.handler({}, mock);
+test.handler({ url: 'http://example.com' }, mock);

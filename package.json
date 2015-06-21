@@ -1,9 +1,10 @@
 {
   "name": "pagespeed-for-slackers",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Send Slack notifications about Google PageSpeed as your website updates on S3.",
   "main": "index.js",
   "dependencies": {
+    "bluebird": "^2.9.30",
     "lodash": "^3.8.0",
     "pretty-bytes": "^1.0.4",
     "psi": "^1.0.6",

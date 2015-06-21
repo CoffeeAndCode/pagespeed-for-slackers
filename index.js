@@ -1,6 +1,7 @@
 var _ = require('lodash');
+var Promise = require('bluebird');
 var prettyBytes = require('pretty-bytes');
-var psi = require('psi');
+var psi = Promise.promisify(require('psi'));
 var request = require('request');
 
 var config = require('./config.json');
@@ -11,20 +12,6 @@ function byteFormatter(value) {
   return prettyBytes(parseFloat(value));
 }
 
-function includesIndexKey(records) {
-  return _.any(records, function(record) {
-    if (record.hasOwnProperty('s3') &&
-      record.s3.hasOwnProperty('object') &&
-      record.s3.object.hasOwnProperty('key')) {
-      return record.s3.object.key === 'index.html';
-    }
-  });
-}
-
-function numberFormatter(value) {
-  return value;
-}
-
 function colorForScore(score) {
   if (score >= config.pagespeed.goodScore) {
     return 'good';
@@ -33,6 +20,21 @@ function colorForScore(score) {
   } else {
     return 'danger';
   }
+}
+
+function createAttachment(data, strategy, url) {
+  return {
+    fallback: 'Google PageSpeed score (' + strategy + '): ' + data.score + "\nhttps://developers.google.com/speed/pagespeed/insights/?url=" + url + '&tab=' + config.pagespeed.strategy,
+    title: 'Google PageSpeed score (' + strategy + '): ' + data.score,
+    title_link: 'https://developers.google.com/speed/pagespeed/insights/?url=' + url + '&tab=' + strategy,
+    fields: pageStatFields(data.pageStats),
+    color: colorForScore(data.score),
+    text: url
+  };
+}
+
+function numberFormatter(value) {
+  return value;
 }
 
 function pageStatFields(data) {
@@ -58,54 +60,45 @@ function pageStatFields(data) {
   });
 }
 
+function postToSlack(context, attachments) {
+  var payload = {
+    channel: config.slack.channel,
+    attachments: attachments
+  };
+
+  request({
+    url: config.slack.incomingWebHook,
+    method: 'POST',
+    json: true,
+    headers: {
+      'content-type': 'application/json'
+    },
+    body: payload
+  }, function(error, response, body) {
+    if (!error && response.statusCode === 200) {
+      context.succeed(body);
+    } else {
+      context.fail(JSON.stringify(response, null, 2));
+    }
+  });
+}
+
 exports.handler = function(event, context) {
   console.log('Lambda event data:');
-  console.log(JSON.stringify(event));
+  console.log(JSON.stringify(event, null, 2));
 
-  if (event.hasOwnProperty('Records') &&
-    event.Records.length > 0 &&
-    includesIndexKey(event.Records)) {
-
-    var options = {
-      strategy: config.pagespeed.strategy,
-      threshold: config.pagespeed.warningScore
-    };
-
-    psi(config.url, options, function (error, data) {
-      if (error) {
-        context.fail(error);
-      } else {
-        var payload = {
-          channel: config.slack.channel,
-          attachments: [
-            {
-              fallback: 'Google PageSpeed score (' + options.strategy + '): ' + data.score + "\nhttps://developers.google.com/speed/pagespeed/insights/?url=" + config.url + '&tab=' + config.pagespeed.strategy,
-              title: 'Google PageSpeed score (' + options.strategy + '): ' + data.score,
-              title_link: 'https://developers.google.com/speed/pagespeed/insights/?url=' + config.url + '&tab=' + config.pagespeed.strategy,
-              fields: pageStatFields(data.pageStats),
-              color: colorForScore(data.score)
-            }
-          ]
-        };
-
-        request({
-          url: config.slack.incomingWebHook,
-          method: 'POST',
-          json: true,
-          headers: {
-            'content-type': 'application/json'
-          },
-          body: payload
-        }, function(error, response, body) {
-          if (!error && response.statusCode === 200) {
-            context.succeed(body);
-          } else {
-            context.fail(JSON.stringify(response));
-          }
-        });
-      }
+  if (event.hasOwnProperty('url')) {
+    Promise.map(['desktop', 'mobile'], function(strategy) {
+      return psi(event.url, {
+        strategy: strategy,
+        threshold: config.pagespeed.warningScore
+      }).then(function(data) {
+        return createAttachment(data, strategy, event.url);
+      });
+    }).then(function(attachments) {
+      postToSlack(context, attachments);
     });
   } else {
-    context.succeed('Did not include "index.html" key. Skipping.');
+    context.fail('Event data did not include "url" property.');
   }
 };

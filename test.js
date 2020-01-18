@@ -1,8 +1,8 @@
-var test = require('./index.js');
+var test = require("./index.js");
 
 var mock = {
   fail: function(str) {
-    console.log('FAIL: ' + str);
+    console.log("FAIL: " + str);
   },
 
   succeed: function(str) {
@@ -10,4 +10,4 @@ var mock = {
   }
 };
 
-test.handler({ url: 'http://example.com' }, mock);
+test.handler({ url: "http://example.com" }, mock);

@@ -1,7 +1,6 @@
 var _ = require("lodash");
-var Promise = require("bluebird");
 var prettyBytes = require("pretty-bytes");
-var psi = Promise.promisify(require("psi"));
+var psi = require("psi");
 var request = require("request");
 
 var config = require("./config.json");
@@ -115,14 +114,16 @@ exports.handler = function(event, context) {
   console.log(JSON.stringify(event, null, 2));
 
   if (event.hasOwnProperty("url")) {
-    Promise.map(["desktop", "mobile"], function(strategy) {
-      return psi(event.url, {
-        strategy: strategy,
-        threshold: config.pagespeed.warningScore
-      }).then(function(data) {
-        return createAttachment(data, strategy, event.url);
-      });
-    }).then(function(attachments) {
+    Promise.all(
+      ["desktop", "mobile"].map(function(strategy) {
+        return psi(event.url, {
+          strategy: strategy,
+          threshold: config.pagespeed.warningScore
+        }).then(function(data) {
+          return createAttachment(data, strategy, event.url);
+        });
+      })
+    ).then(function(attachments) {
       postToSlack(context, attachments);
     });
   } else {

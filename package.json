@@ -4,10 +4,9 @@
   "description": "Send Slack notifications about Google PageSpeed as your website updates on S3.",
   "main": "index.js",
   "dependencies": {
-    "bluebird": "^2.9.30",
     "lodash": "^3.8.0",
     "pretty-bytes": "^1.0.4",
-    "psi": "^1.0.6",
+    "psi": "^4.0.1",
     "request": "^2.55.0"
   },
   "devDependencies": {},

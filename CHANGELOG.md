@@ -5,7 +5,11 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
 
-Nothing so far.
+### Changed
+
+- Bump psi dependency to latest; use v5 Page Speed API
+- Adjust file formatting
+- Ignore yarn.lock file
 
 ## [0.1.0] - 2015-06-21
 

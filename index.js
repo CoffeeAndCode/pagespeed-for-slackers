@@ -1,4 +1,3 @@
-var _ = require("lodash");
 var prettyBytes = require("pretty-bytes");
 var psi = require("psi");
 var request = require("request");
@@ -68,7 +67,7 @@ function pageStatFields(data) {
     totalRequestBytes: { formatter: byteFormatter, label: "Total Size" }
   };
 
-  return _.map(data, function(value, key) {
+  return Object.keys(data).map(function(key) {
     return {
       short: true,
       title:
@@ -77,8 +76,8 @@ function pageStatFields(data) {
           : key,
       value:
         display.hasOwnProperty(key) && display[key].hasOwnProperty("formatter")
-          ? display[key].formatter(value)
-          : value
+          ? display[key].formatter(data[value])
+          : data[value]
     };
   });
 }

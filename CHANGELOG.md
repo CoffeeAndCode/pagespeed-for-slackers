@@ -10,6 +10,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Bump psi dependency to latest; use v5 Page Speed API
 - Adjust file formatting
 - Ignore yarn.lock file
+- Update pretty-bytes dependency
+- No longer depend on lodash
 
 ## [0.1.0] - 2015-06-21
 

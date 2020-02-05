@@ -21,6 +21,8 @@ function colorForScore(score) {
 }
 
 function createAttachment(data, strategy, url) {
+  console.log(data, strategy, url);
+
   return {
     fallback:
       "Google PageSpeed score (" +
